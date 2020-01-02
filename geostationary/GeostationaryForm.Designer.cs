@@ -1,6 +1,6 @@
 ﻿namespace geostationary
 {
-    partial class Form1
+    partial class GeostationaryForm
     {
         /// <summary>
         /// Required designer variable.
