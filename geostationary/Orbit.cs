@@ -7,16 +7,48 @@ namespace Geostationary
     /// </summary>
     public class Orbit
     {
+        /// <summary>
+        /// The closest distance to the center of mass in this Orbit.
+        /// </summary>
         public double periapsis;
+        /// <summary>
+        /// The furthest distance to the center of mass in this Orbit.
+        /// </summary>
         public double apoapsis;
+        /// <summary>
+        /// (radians) The inclination angle above Earth's orbital plane.
+        /// </summary>
         public double inclination;
-        public double argumentOfPeriapsis;
+        /// <summary>
+        /// (radians) The angle between the ascending node and periapsis.
+        /// </summary>
+        private double argumentOfPeriapsis;
+        /// <summary>
+        /// (radians) The starting position in this Orbit.
+        /// </summary>
         public double trueAnomalyIn;
+        /// <summary>
+        /// (radians) The ending position in this Orbit.
+        /// </summary>
         public double trueAnomalyOut;
+        /// <summary>
+        /// (m/s) Change in velocity from the most recent maneuver.
+        /// </summary>
         public double lastDeltaV;
-        public double relativeRotation;
+        /// <summary>
+        /// The standard gravitational parameter of Earth.
+        /// </summary>
         public static double mu = 398600.4418;
 
+        public double relativeRotation;
+
+        /// <summary>
+        /// An Orbit initialized based on the given parameters.
+        /// </summary>
+        /// <param name="apoapsis">The furthest distance from the center of mass in this Orbit.</param>
+        /// <param name="periapsis">The closest distance to the center of mass in this Orbit.</param>
+        /// <param name="inclination">Inclination angle above Earth's orbital plane.</param>
+        /// <param name="argumentOfPeriapsis">Angle between the ascending node and periapsis.</param>
         public Orbit(double apoapsis, double periapsis, double inclination, double argumentOfPeriapsis)
         {
             this.apoapsis = apoapsis;
@@ -26,8 +58,17 @@ namespace Geostationary
             this.relativeRotation = 0.0;
         }
 
+        /// <summary>
+        /// A new uninitialized Orbit.
+        /// </summary>
         public Orbit() { }
 
+        /// <summary>
+        /// Perform a maneuever in prograde at the given position in the current orbit.
+        /// </summary>
+        /// <param name="trueAnomaly">(radians) The position in this Orbit (relative to periapsis).</param>
+        /// <param name="thrust">(m/s) The change in velocity from this maneuver.</param>
+        /// <returns>The new Orbit after completing the prograde maneuver.</returns>
         public Orbit Prograde(double trueAnomaly, double thrust)
         {
             Orbit orbit_out = new Orbit
@@ -73,6 +114,10 @@ namespace Geostationary
             return orbit_out;
         }
 
+        /// <summary>
+        /// Bring the orbital inclination to zero.
+        /// </summary>
+        /// <returns>The orbit after scrubbing the inclination angle.</returns>
         public Orbit ScrubInclination()
         {
             Orbit orbit_out = new Orbit();
@@ -111,6 +156,10 @@ namespace Geostationary
             return orbit_out;
         }
 
+        /// <summary>
+        /// Perform the appropriate maneuvers to enter a geosynchronous orbit (circular at 42164 km).
+        /// </summary>
+        /// <returns>The orbit after entering a geosynchronous orbit.</returns>
         public Orbit ToCircularGeosynchronous()
         {
             Orbit orbit_out = new Orbit();
@@ -137,6 +186,12 @@ namespace Geostationary
             return orbit_out;
         }
 
+        /// <summary>
+        /// Perform a maneuver in the radial direction.
+        /// </summary>
+        /// <param name="true_anomaly">(radians) The position in the orbit to perform this maneuver.</param>
+        /// <param name="thrust">(m/s) The change in velocity for this maneuver.</param>
+        /// <returns></returns>
         public Orbit RadialBurn(double true_anomaly, double thrust)
         {
             Orbit orbit_out = new Orbit();
