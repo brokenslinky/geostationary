@@ -53,6 +53,7 @@
     <Compile Include="GeostationaryForm.Designer.cs">
       <DependentUpon>GeostationaryForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Orbit.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="GeostationaryForm.resx">

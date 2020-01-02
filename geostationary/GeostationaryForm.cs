@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Geostationary;
+using System;
 using System.Windows.Forms;
 
 namespace Geostationary
 {
     public partial class GeostationaryForm : Form
     {
-        public static double mu = 398600.4418;
 
         public GeostationaryForm()
         {
@@ -14,182 +14,6 @@ namespace Geostationary
             periapsisInput.Text = "200";
             inclinationInput.Text = "30";
             AoPinput.Text = "90";
-        }
-
-        /// <summary>
-        /// Class for the orbit of a spacecraft.
-        /// </summary>
-        public class Orbit
-        {
-            public double periapsis;
-            public double apoapsis;
-            public double inclination;
-            public double argumentOfPeriapsis;
-            public double trueAnomalyIn;
-            public double trueAnomalyOut;
-            public double lastDeltaV;
-            public double relativeRotation;
-
-            public Orbit(double apoapsis, double periapsis, double inclination, double argumentOfPeriapsis)
-            {
-                this.apoapsis = apoapsis;
-                this.periapsis = periapsis;
-                this.inclination = inclination;
-                this.argumentOfPeriapsis = argumentOfPeriapsis;
-                this.relativeRotation = 0.0;
-            }
-
-            public Orbit() { }
-        }
-
-        public Orbit Prograde(Orbit orbitIn, double trueAnomaly, double thrust)
-        {
-            Orbit orbit_out = new Orbit
-            {
-                inclination = orbitIn.inclination,
-                trueAnomalyIn = trueAnomaly,
-                lastDeltaV = thrust
-            };
-            double c = Math.Cos(trueAnomaly);
-            double altitude = 2.0 * orbitIn.apoapsis * orbitIn.periapsis / (orbitIn.apoapsis * (1.0 + c) + orbitIn.periapsis * (1.0 - c));
-            double in_speed = Math.Sqrt(2.0 * mu * (1.0 / altitude - 1.0 / (orbitIn.apoapsis + orbitIn.periapsis)));
-            double out_speed = in_speed + thrust;
-            orbit_out.apoapsis = (mu * altitude) * (1.0 + Math.Sqrt(1.0 - 4.0 * (
-                2.0 * mu - altitude * out_speed * out_speed) * orbitIn.apoapsis * (
-                1.0 - orbitIn.apoapsis / (orbitIn.apoapsis + orbitIn.periapsis)) * (
-                out_speed / in_speed) * (out_speed / in_speed) / (
-                2.0 * mu * altitude))) / (2.0 * mu - altitude * out_speed * out_speed);
-            orbit_out.periapsis = 2.0 * mu * altitude / (2.0 * mu - altitude * out_speed * out_speed) - orbit_out.apoapsis;
-            orbit_out.trueAnomalyOut = Math.Acos((orbit_out.apoapsis * orbit_out.periapsis * (
-                orbitIn.apoapsis * (1.0 + c) + orbitIn.periapsis * (1.0 - c)) / (
-                orbitIn.apoapsis * orbitIn.periapsis) - orbit_out.apoapsis - orbit_out.periapsis) / 
-                (orbit_out.apoapsis - orbit_out.periapsis));
-            if ((orbit_out.apoapsis * orbit_out.periapsis * (
-                orbitIn.apoapsis * (1.0 + c) + orbitIn.periapsis * (1.0 - c)) / (
-                orbitIn.apoapsis * orbitIn.periapsis) - orbit_out.apoapsis - orbit_out.periapsis) /
-                (orbit_out.apoapsis - orbit_out.periapsis) > 1.0)
-                orbit_out.trueAnomalyOut = 0.0;
-            if ((orbit_out.apoapsis * orbit_out.periapsis * (
-                orbitIn.apoapsis * (1.0 + c) + orbitIn.periapsis * (1.0 - c)) / (
-                orbitIn.apoapsis * orbitIn.periapsis) - orbit_out.apoapsis - orbit_out.periapsis) /
-                (orbit_out.apoapsis - orbit_out.periapsis) < -1.0)
-                orbit_out.trueAnomalyOut = Math.PI;
-            orbit_out.argumentOfPeriapsis = orbitIn.argumentOfPeriapsis + orbit_out.trueAnomalyOut - orbit_out.trueAnomalyIn;
-            if (orbit_out.argumentOfPeriapsis < 0.0)
-                orbit_out.argumentOfPeriapsis += 2.0 * Math.PI;
-            if (orbit_out.periapsis > orbitIn.apoapsis)
-            {
-                double tmp = orbit_out.periapsis;
-                orbit_out.periapsis = orbit_out.apoapsis;
-                orbit_out.apoapsis = tmp;
-            }
-            orbit_out.relativeRotation = orbitIn.relativeRotation + orbit_out.trueAnomalyOut - orbit_out.trueAnomalyIn;
-            return orbit_out;
-        }
-
-        public Orbit ScrubInclination(Orbit orbit_in)
-        {
-            Orbit orbit_out = new Orbit();
-            orbit_out.inclination = orbit_in.inclination;
-            orbit_out.trueAnomalyIn = orbit_in.argumentOfPeriapsis;
-            if (orbit_out.trueAnomalyIn < 0.0)
-                orbit_out.trueAnomalyIn += 2.0 * Math.PI;
-            if (orbit_out.trueAnomalyIn < Math.PI / 2.0)
-                orbit_out.trueAnomalyIn = Math.PI + orbit_out.trueAnomalyIn;
-            double c = Math.Cos(orbit_out.trueAnomalyIn);
-            double altitude = 2.0 * orbit_in.apoapsis * orbit_in.periapsis / (orbit_in.apoapsis * (1.0 + c) + orbit_in.periapsis * (1.0 - c));
-            double out_speed = Math.Sqrt(2.0 * mu * (1.0 / altitude - 1.0 / (orbit_in.apoapsis + orbit_in.periapsis))) * Math.Cos(orbit_in.inclination);
-            orbit_out.lastDeltaV = Math.Sqrt(2.0 * mu * (1.0 / altitude - 1.0 / (
-                orbit_in.apoapsis + orbit_in.periapsis))) * Math.Sin(orbit_in.inclination);
-            orbit_out.apoapsis = (mu * altitude) * (1.0 + Math.Sqrt(1.0 - 4.0 * (
-                2.0 * mu - altitude * out_speed * out_speed) * orbit_in.apoapsis * (
-                1.0 - orbit_in.apoapsis / (orbit_in.apoapsis + orbit_in.periapsis)) * Math.Cos(
-                orbit_in.inclination) * Math.Cos(orbit_in.inclination) / (
-                2.0 * mu * altitude))) / (2.0 * mu - altitude * out_speed * out_speed);
-            orbit_out.periapsis = 2.0 * mu * altitude / (2.0 * mu - altitude * out_speed * out_speed) - orbit_out.apoapsis;
-            orbit_out.trueAnomalyOut = Math.Acos((orbit_out.apoapsis * orbit_out.periapsis * (
-                orbit_in.apoapsis * (1.0 + c) + orbit_in.periapsis * (1.0 - c)) / (
-                orbit_in.apoapsis * orbit_in.periapsis) - orbit_out.apoapsis - orbit_out.periapsis) / (
-                orbit_out.apoapsis - orbit_out.periapsis));
-            if ((orbit_out.apoapsis * orbit_out.periapsis * (
-                orbit_in.apoapsis * (1.0 + c) + orbit_in.periapsis * (1.0 - c)) / (
-                orbit_in.apoapsis * orbit_in.periapsis) - orbit_out.apoapsis - orbit_out.periapsis) / (
-                orbit_out.apoapsis - orbit_out.periapsis) > 1.0)
-                orbit_out.trueAnomalyOut = 0.0;
-            orbit_out.trueAnomalyOut = 2.0 * Math.PI - orbit_out.trueAnomalyOut;
-            orbit_out.argumentOfPeriapsis = orbit_in.argumentOfPeriapsis + orbit_out.trueAnomalyOut - orbit_out.trueAnomalyIn;
-            if (orbit_out.argumentOfPeriapsis < 0.0)
-                orbit_out.argumentOfPeriapsis += 2.0 * Math.PI;
-            orbit_out.inclination = 0.0;
-            orbit_out.relativeRotation = orbit_in.relativeRotation + orbit_out.trueAnomalyOut - orbit_out.trueAnomalyIn;
-            return orbit_out;
-        }
-
-        public Orbit ToCircularGeosynchronous(Orbit orbit_in)
-        {
-            Orbit orbit_out = new Orbit();
-            double geosynchronous = 42164.0;
-            double tmp1 = Math.Sqrt(2.0 * mu) * (Math.Abs(Math.Sqrt(1.0 / orbit_in.apoapsis - 1.0 / (
-                orbit_in.apoapsis + orbit_in.periapsis)) - Math.Sqrt(1.0 / orbit_in.apoapsis - 1.0 / (
-                orbit_in.apoapsis + geosynchronous))) + Math.Abs(Math.Sqrt(1.0 / geosynchronous - 1.0 / (
-                geosynchronous + orbit_in.apoapsis)) - Math.Sqrt(1.0 / (2.0 * geosynchronous))));
-            double tmp2 = Math.Sqrt(2.0 * mu) * (Math.Abs(Math.Sqrt(1.0 / orbit_in.periapsis - 1.0 / (
-                orbit_in.apoapsis + orbit_in.periapsis)) - Math.Sqrt(1.0 / orbit_in.periapsis - 1.0 / (
-                orbit_in.periapsis + geosynchronous))) + Math.Abs(Math.Sqrt(1.0 / geosynchronous - 1.0 / (
-                geosynchronous + orbit_in.periapsis)) - Math.Sqrt(1.0 / (2.0 * geosynchronous))));
-            if (tmp2 < tmp1)
-                orbit_out.lastDeltaV = tmp2;
-            else
-                orbit_out.lastDeltaV = tmp1;
-            orbit_out.periapsis = geosynchronous;
-            orbit_out.apoapsis = geosynchronous;
-            orbit_out.trueAnomalyIn = 0.0;
-            orbit_out.trueAnomalyOut = 0.0;
-            orbit_out.inclination = orbit_in.inclination;
-            orbit_out.argumentOfPeriapsis = orbit_in.argumentOfPeriapsis;
-            orbit_out.relativeRotation = orbit_in.relativeRotation;
-            return orbit_out;
-        }
-
-        public Orbit RadialBurn(Orbit orbit_in, double true_anomaly, double thrust)
-        {
-            Orbit orbit_out = new Orbit();
-            orbit_out.inclination = orbit_in.inclination;
-            orbit_out.argumentOfPeriapsis = orbit_in.argumentOfPeriapsis;
-            orbit_out.lastDeltaV = thrust;
-            orbit_out.trueAnomalyIn = true_anomaly;
-            double c = Math.Cos(orbit_out.trueAnomalyIn);
-            double altitude = 2.0 * orbit_in.apoapsis * orbit_in.periapsis / (orbit_in.apoapsis * (
-                1.0 + c) + orbit_in.periapsis * (1.0 - c));
-            double in_speed = Math.Sqrt(2.0 * mu * (1.0 / altitude - 1.0 / (
-                orbit_in.apoapsis + orbit_in.periapsis)));
-            double altitude_per_angle = (orbit_in.apoapsis - orbit_in.periapsis) * Math.Sin(
-                true_anomaly) / ((orbit_in.apoapsis * (1.0 + Math.Cos(
-                true_anomaly)) + orbit_in.periapsis * (1.0 - Math.Cos(true_anomaly))) * (
-                orbit_in.apoapsis * (1.0 + Math.Cos(
-                true_anomaly)) + orbit_in.periapsis * (1.0 - Math.Cos(true_anomaly))));
-            double gamma = -true_anomaly;
-            if ((altitude_per_angle * Math.Cos(
-                    true_anomaly) - altitude * Math.Sin(true_anomaly)) != 0.0)
-                gamma = Math.PI / 2.0 - true_anomaly - Math.Atan((altitude_per_angle * Math.Sin(
-                    true_anomaly) + altitude * Math.Cos(true_anomaly)) / (altitude_per_angle * Math.Cos(
-                    true_anomaly) - altitude * Math.Sin(true_anomaly)));
-            double speed_squared = in_speed * in_speed + 2.0 * in_speed * thrust * Math.Sin(
-                gamma) + thrust * thrust;
-            orbit_out.periapsis = mu * altitude * (1.0 - Math.Sqrt(1.0 - 4.0 * orbit_in.apoapsis * (
-                1.0 - orbit_in.apoapsis / (orbit_in.apoapsis + orbit_in.periapsis)) * (
-                2.0 * mu - altitude * speed_squared) / (2.0 * mu * altitude))) / (
-                2.0 * mu - altitude * speed_squared);
-            orbit_out.apoapsis = 2.0 * mu * altitude / (
-                2.0 * mu - altitude * speed_squared) - orbit_out.periapsis;
-            orbit_out.trueAnomalyOut = Math.Acos((2.0 * orbit_out.apoapsis * orbit_out.periapsis - 
-                altitude * (orbit_out.apoapsis + orbit_out.periapsis)) / (altitude * (
-                orbit_out.apoapsis - orbit_out.periapsis)));
-            orbit_out.argumentOfPeriapsis = orbit_in.argumentOfPeriapsis +
-                orbit_out.trueAnomalyOut - true_anomaly;
-            if (orbit_out.argumentOfPeriapsis < 0.0)
-                orbit_out.argumentOfPeriapsis += 2.0 * Math.PI;
-            return orbit_out;
         }
 
         private void to_geostationary_Click(object sender, EventArgs e)
@@ -212,6 +36,7 @@ namespace Geostationary
             Orbit best_inclination_scrub = new Orbit();
             Orbit best_inclination_prograde = new Orbit();
             Orbit best_geostationary = new Orbit();
+            double mu = Orbit.mu;
 
             for (double start_true_anomaly = 0.0; start_true_anomaly <= Math.PI; start_true_anomaly += increment_angle)
             {
@@ -221,16 +46,16 @@ namespace Geostationary
                 double max_initial_thrust = Math.Sqrt(2.0 * mu / start_altitude) - start_speed; // escape velocity
                 for (double initial_thrust = 0.0; initial_thrust < max_initial_thrust; initial_thrust += increment_thrust)
                 {
-                    initial_prograde = Prograde(start_orbit, start_true_anomaly, initial_thrust);
-                    inclination_scrub = ScrubInclination(initial_prograde);
+                    initial_prograde = start_orbit.Prograde(start_orbit, start_true_anomaly, initial_thrust);
+                    inclination_scrub = initial_prograde.ScrubInclination(initial_prograde);
                     double altitude_of_scrub = 2.0 * inclination_scrub.apoapsis * inclination_scrub.periapsis / (
                         inclination_scrub.apoapsis * (1.0 + Math.Cos(inclination_scrub.trueAnomalyOut)) + inclination_scrub.periapsis * (
                         1.0 - Math.Cos(inclination_scrub.trueAnomalyOut)));
                     double v = Math.Sqrt(2.0 * mu * (1.0 / altitude_of_scrub - 1.0 / (inclination_scrub.periapsis + inclination_scrub.apoapsis)));
                     for (double prograde_amount = increment_thrust - v; prograde_amount < Math.Sqrt(2.0 * mu / altitude_of_scrub) - v; prograde_amount += increment_thrust)
                     {
-                        inclination_prograde = Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
-                        geostationary = ToCircularGeosynchronous(inclination_prograde);
+                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
+                        geostationary = inclination_prograde.ToCircularGeosynchronous(inclination_prograde);
                         double delta_v = Math.Abs(initial_thrust) + Math.Sqrt(
                             inclination_scrub.lastDeltaV * inclination_scrub.lastDeltaV +
                             prograde_amount * prograde_amount) + Math.Abs(geostationary.lastDeltaV);
@@ -257,6 +82,7 @@ namespace Geostationary
             Orbit geostationary = new Orbit();
             double increment_angle = previous_increment_angle / 64.0;
             double increment_thrust = previous_increment_thrust / 64.0;
+            double mu = Orbit.mu;
             for (double start_true_anomaly = best_initial_prograde.trueAnomalyIn - previous_increment_angle; start_true_anomaly <= best_initial_prograde.trueAnomalyIn + previous_increment_angle; start_true_anomaly += increment_angle)
             {
                 if (start_true_anomaly > Math.PI)
@@ -269,18 +95,18 @@ namespace Geostationary
                     max_initial_thrust = Math.Sqrt(2.0 * mu / start_altitude) - start_speed; // escape velocity
                 for (double initial_thrust = best_initial_prograde.lastDeltaV - previous_increment_thrust; initial_thrust < max_initial_thrust; initial_thrust += increment_thrust)
                 {
-                    initial_prograde = Prograde(start_orbit, start_true_anomaly, initial_thrust);
-                    inclination_scrub = ScrubInclination(initial_prograde);
+                    initial_prograde = start_orbit.Prograde(start_orbit, start_true_anomaly, initial_thrust);
+                    inclination_scrub = initial_prograde.ScrubInclination(initial_prograde);
                     double altitude_of_scrub = 2.0 * inclination_scrub.apoapsis * inclination_scrub.periapsis / (
                         inclination_scrub.apoapsis * (1.0 + Math.Cos(inclination_scrub.trueAnomalyOut)) + inclination_scrub.periapsis * (
                         1.0 - Math.Cos(inclination_scrub.trueAnomalyOut)));
                     double v = Math.Sqrt(2.0 * mu * (1.0 / altitude_of_scrub - 1.0 / (inclination_scrub.periapsis + inclination_scrub.apoapsis)));
                     for (double prograde_amount = best_inclination_prograde.lastDeltaV - previous_increment_thrust; prograde_amount < best_inclination_prograde.lastDeltaV + previous_increment_thrust; prograde_amount += increment_thrust)
                     {
-                        inclination_prograde = Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
+                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
                         inclination_prograde.trueAnomalyOut = 2.0 * Math.PI - inclination_prograde.trueAnomalyOut;
                         inclination_prograde.relativeRotation = inclination_scrub.relativeRotation + inclination_prograde.trueAnomalyOut - inclination_prograde.trueAnomalyIn;
-                        geostationary = ToCircularGeosynchronous(inclination_prograde);
+                        geostationary = inclination_prograde.ToCircularGeosynchronous(inclination_prograde);
                         double delta_v = Math.Abs(initial_thrust) + Math.Sqrt(
                             inclination_scrub.lastDeltaV * inclination_scrub.lastDeltaV + 
                             prograde_amount * prograde_amount) +
