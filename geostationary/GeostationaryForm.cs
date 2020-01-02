@@ -46,16 +46,16 @@ namespace Geostationary
                 double max_initial_thrust = Math.Sqrt(2.0 * mu / start_altitude) - start_speed; // escape velocity
                 for (double initial_thrust = 0.0; initial_thrust < max_initial_thrust; initial_thrust += increment_thrust)
                 {
-                    initial_prograde = start_orbit.Prograde(start_orbit, start_true_anomaly, initial_thrust);
-                    inclination_scrub = initial_prograde.ScrubInclination(initial_prograde);
+                    initial_prograde = start_orbit.Prograde(start_true_anomaly, initial_thrust);
+                    inclination_scrub = initial_prograde.ScrubInclination();
                     double altitude_of_scrub = 2.0 * inclination_scrub.apoapsis * inclination_scrub.periapsis / (
                         inclination_scrub.apoapsis * (1.0 + Math.Cos(inclination_scrub.trueAnomalyOut)) + inclination_scrub.periapsis * (
                         1.0 - Math.Cos(inclination_scrub.trueAnomalyOut)));
                     double v = Math.Sqrt(2.0 * mu * (1.0 / altitude_of_scrub - 1.0 / (inclination_scrub.periapsis + inclination_scrub.apoapsis)));
                     for (double prograde_amount = increment_thrust - v; prograde_amount < Math.Sqrt(2.0 * mu / altitude_of_scrub) - v; prograde_amount += increment_thrust)
                     {
-                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
-                        geostationary = inclination_prograde.ToCircularGeosynchronous(inclination_prograde);
+                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub.trueAnomalyOut, prograde_amount);
+                        geostationary = inclination_prograde.ToCircularGeosynchronous();
                         double delta_v = Math.Abs(initial_thrust) + Math.Sqrt(
                             inclination_scrub.lastDeltaV * inclination_scrub.lastDeltaV +
                             prograde_amount * prograde_amount) + Math.Abs(geostationary.lastDeltaV);
@@ -95,18 +95,18 @@ namespace Geostationary
                     max_initial_thrust = Math.Sqrt(2.0 * mu / start_altitude) - start_speed; // escape velocity
                 for (double initial_thrust = best_initial_prograde.lastDeltaV - previous_increment_thrust; initial_thrust < max_initial_thrust; initial_thrust += increment_thrust)
                 {
-                    initial_prograde = start_orbit.Prograde(start_orbit, start_true_anomaly, initial_thrust);
-                    inclination_scrub = initial_prograde.ScrubInclination(initial_prograde);
+                    initial_prograde = start_orbit.Prograde(start_true_anomaly, initial_thrust);
+                    inclination_scrub = initial_prograde.ScrubInclination();
                     double altitude_of_scrub = 2.0 * inclination_scrub.apoapsis * inclination_scrub.periapsis / (
                         inclination_scrub.apoapsis * (1.0 + Math.Cos(inclination_scrub.trueAnomalyOut)) + inclination_scrub.periapsis * (
                         1.0 - Math.Cos(inclination_scrub.trueAnomalyOut)));
                     double v = Math.Sqrt(2.0 * mu * (1.0 / altitude_of_scrub - 1.0 / (inclination_scrub.periapsis + inclination_scrub.apoapsis)));
                     for (double prograde_amount = best_inclination_prograde.lastDeltaV - previous_increment_thrust; prograde_amount < best_inclination_prograde.lastDeltaV + previous_increment_thrust; prograde_amount += increment_thrust)
                     {
-                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub, inclination_scrub.trueAnomalyOut, prograde_amount);
+                        inclination_prograde = inclination_scrub.Prograde(inclination_scrub.trueAnomalyOut, prograde_amount);
                         inclination_prograde.trueAnomalyOut = 2.0 * Math.PI - inclination_prograde.trueAnomalyOut;
                         inclination_prograde.relativeRotation = inclination_scrub.relativeRotation + inclination_prograde.trueAnomalyOut - inclination_prograde.trueAnomalyIn;
-                        geostationary = inclination_prograde.ToCircularGeosynchronous(inclination_prograde);
+                        geostationary = inclination_prograde.ToCircularGeosynchronous();
                         double delta_v = Math.Abs(initial_thrust) + Math.Sqrt(
                             inclination_scrub.lastDeltaV * inclination_scrub.lastDeltaV + 
                             prograde_amount * prograde_amount) +
@@ -174,10 +174,9 @@ namespace Geostationary
                 "Apoapsis = " + best_initial_prograde.apoapsis.ToString() + "     Periapsis = " +
                 best_initial_prograde.periapsis.ToString() + "     Rotation = " + best_initial_prograde.relative_rotation.ToString());
                 */
-            MessageBox.Show(best_inclination_prograde.relativeRotation.ToString());
+            //MessageBox.Show(best_inclination_prograde.relativeRotation.ToString());
             MessageBox.Show("Total delta v = " + (best_delta_v * 1000.0).ToString("f4") + " m/s");
         }
-
 
     }
 }
