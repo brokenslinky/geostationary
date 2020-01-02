@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace geostationary
+namespace Geostationary
 {
     public partial class GeostationaryForm : Form
     {

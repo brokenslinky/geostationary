@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace geostationary.Properties
+namespace Geostationary.Properties
 {
 
 

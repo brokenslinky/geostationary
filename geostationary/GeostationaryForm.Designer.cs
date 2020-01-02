@@ -1,4 +1,4 @@
-﻿namespace geostationary
+﻿namespace Geostationary
 {
     partial class GeostationaryForm
     {
